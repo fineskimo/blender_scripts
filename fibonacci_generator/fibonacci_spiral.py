@@ -24,8 +24,8 @@
 bl_info = {    
     "name"        : "Fibonacci",
     "author"      : "Tamir Lousky",
-    "version"     : (0, 0, 1),
-    "blender"     : (2, 69, 0),
+    "version"     : (0, 0, 2),
+    "blender"     : (2, 80, 0),
     "category"    : "Add Curve",
     "warning"     : "",
     "location"    : "View3D > Add > Curve > Fibonacci",
@@ -39,7 +39,7 @@ from mathutils import Vector
 from math import sqrt, radians, sin, cos
 
 ## Constants
-w                = 1 # Curve weight  
+w = 1 # Curve weight  
 
 def F(n):
     ''' returns the Fibonacci number of n-th iteration '''
@@ -56,7 +56,7 @@ def MakePolyLine( objname, curvename, cList ):
     # Create a new object, set its origin to xyz = 0, link obj to scene
     objectdata = bpy.data.objects.new( objname, curvedata)  
     objectdata.location = (0,0,0) # object origin  
-    bpy.context.scene.objects.link( objectdata )  
+    bpy.context.collection.objects.link( objectdata )  
   
     # Create a bezier spline and add the same number of control points as
     # the number of coordinates in provided cList
@@ -70,8 +70,8 @@ def MakePolyLine( objname, curvename, cList ):
 
     # Reference curve object, select and activate it
     obj = bpy.context.scene.objects[ objectdata.name ]
-    obj.select = True
-    bpy.context.scene.objects.active = obj
+    obj.select_set(True)
+    bpy.context.view_layer.objects.active = obj
     
     # Set bezier handles to Auto, then Free
     for bp in polyline.bezier_points:    
@@ -130,14 +130,14 @@ class add_fibonacci_spiral( bpy.types.Operator ):
     bl_label   = "Add Fibonacci Spiral"
     bl_options = {'REGISTER', 'UNDO', 'PRESET'}
 
-    iterations = bpy.props.IntProperty(
+    iterations : bpy.props.IntProperty(
         name        = "Iterations",
         description = "Number of fractal iterations",
         min         = 1,
         default     = 6
     )
 
-    radius = bpy.props.FloatProperty(
+    radius : bpy.props.FloatProperty(
         name        = "Radius",
         description = "Radius of the snowflake",
         min         = 0.1,
@@ -192,20 +192,24 @@ def menu_func( self, context ):
     self.layout.operator( 
         "curve.add_fibonacci_spiral", 
         text = "Fibonacci", 
-        icon = "PLUGIN"
+        icon = "MOD_CURVE"
     )
 
-def register():
-    bpy.utils.register_module(__name__)
+classes = (ADD_OT_fibonacci_spiral, )
 
-    # Add "Fibonacci" menu to the "Add Mesh" menu
-    bpy.types.INFO_MT_curve_add.append( menu_func )
+
+def register():
+    from bpy.utils import register_class
+    for cls in classes:
+        register_class(cls)
+    
+    bpy.types.VIEW3D_MT_curve_add.append(menu_func)
+
 
 def unregister():
-    bpy.utils.unregister_module(__name__)
-
-    # Remove "Fibonacci" menu from the "Add Mesh" menu.
-    bpy.types.INFO_MT_curve_add.remove( menu_func )
+    from bpy.utils import unregister_class
+    for cls in reversed(classes):
+        unregister_class(cls)  
 
 if __name__ == "__main__":
     register()
